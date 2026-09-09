@@ -1,46 +1,28 @@
 import { Item, ITEMS } from "@/data/suitcase-items";
 import { Head } from "@inertiajs/react";
 import { useEffect, useState } from "react";
+import ReadyPhase from "./components/ready-phase";
+import PlayingPhase from "./components/playing-phase";
+import FinishedPhase from "./components/finished-phase";
+import {
+    CAPACITY,
+    GOOD_CATCH_BONUS,
+    HIGH_SCORE_KEY,
+    MAX_STRIKES,
+    OVERPACK_PENALTY,
+    PACK_BANNED_PENALTY,
+    REJECT_SAFE_PENALTY,
+    ROUND_TIME,
+} from "./constants";
+import { Feedback } from "./typings";
 
-type Feedback = {
-    kind: "good" | "bad" | "warn";
-    text: string;
-};
-
-type Phase = "ready" | "playing" | "over";
-
-const CAPACITY = 12;
-const ROUND_TIME = 30;
-const MAX_STRIKES = 3;
-const HIGH_SCORE_KEY = "pack-and-pass-high-score";
-
-const PACK_BANNED_PENALTY = 20;
-const OVERPACK_PENALTY = 5;
-const REJECT_SAFE_PENALTY = 5;
-const GOOD_CATCH_BONUS = 15;
-
-const FEEDBACK_CLASSES: Record<Feedback["kind"], string> = {
-    good: "bg-emerald-500/20 text-emerald-300",
-    bad: "bg-rose-500/20 text-rose-300",
-    warn: "bg-amber-500/20 text-amber-300",
-};
+type Phase = "ready" | "playing" | "finished";
 
 function randomItem(excludeId?: string): Item {
     const pool = excludeId
         ? ITEMS.filter((item) => item.id !== excludeId)
         : ITEMS;
     return pool[Math.floor(Math.random() * pool.length)];
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-    return (
-        <div className="rounded-xl bg-white/5 px-2 py-2.5">
-            <div className="text-base leading-tight font-bold">{value}</div>
-            <div className="mt-1 text-[10px] font-medium tracking-wider text-indigo-200/60 uppercase">
-                {label}
-            </div>
-        </div>
-    );
 }
 
 const Home = () => {
@@ -54,7 +36,7 @@ const Home = () => {
     const [caught, setCaught] = useState(0);
     const [best, setBest] = useState(0);
     const [newBest, setNewBest] = useState(false);
-    const [feedback, setFeedback] = useState<Feedback | null>(null);
+    const [feedback, setFeedback] = useState<Feedback | undefined>();
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -81,12 +63,12 @@ const Home = () => {
 
         if (timeLeft <= 0 || strikes >= MAX_STRIKES) {
             setNewBest(score > best);
-            setPhase("over");
+            setPhase("finished");
         }
     }, [phase, timeLeft, strikes, score, best]);
 
     useEffect(() => {
-        if (phase !== "over") return;
+        if (phase !== "finished") return;
 
         setBest((prev) => {
             const next = Math.max(prev, score);
@@ -102,7 +84,7 @@ const Home = () => {
     useEffect(() => {
         if (!feedback) return;
 
-        const timer = window.setTimeout(() => setFeedback(null), 900);
+        const timer = window.setTimeout(() => setFeedback(undefined), 900);
 
         return () => window.clearTimeout(timer);
     }, [feedback]);
@@ -178,7 +160,7 @@ const Home = () => {
         setPacked(0);
         setCaught(0);
         setNewBest(false);
-        setFeedback(null);
+        setFeedback(undefined);
         setItem(randomItem());
         setPhase("playing");
     };
@@ -201,189 +183,31 @@ const Home = () => {
                         </p>
                     </div>
 
-                    {phase === "ready" && (
-                        <div className="px-8 py-8 text-center">
-                            <div className="text-6xl">🛂</div>
-                            <h2 className="mt-4 text-xl font-bold">
-                                Can you pack the perfect case?
-                            </h2>
-                            <ul className="mx-auto mt-5 max-w-sm space-y-2 text-left text-sm text-indigo-100/90">
-                                <li>
-                                    ✅ Pack items that are allowed into Canada.
-                                </li>
-                                <li>
-                                    🚫 Reject prohibited & restricted goods —
-                                    weapons, cannabis, fresh food, plants.
-                                </li>
-                                <li>
-                                    ⚖️ Don't overload your {CAPACITY} kg
-                                    suitcase.
-                                </li>
-                                <li>
-                                    💥 {MAX_STRIKES} mistakes and security stops
-                                    you.
-                                </li>
-                                <li>⏱️ You have {ROUND_TIME} seconds. Go!</li>
-                            </ul>
-                            <button
-                                onClick={start}
-                                className="mt-7 rounded-2xl bg-indigo-500 px-8 py-3.5 text-base font-bold shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-400 active:scale-95"
-                            >
-                                Start packing
-                            </button>
-                        </div>
-                    )}
+                    {phase === "ready" && <ReadyPhase start={start} />}
 
                     {phase === "playing" && (
-                        <div className="px-6 py-6">
-                            <div className="grid grid-cols-4 gap-2 text-center">
-                                <Stat label="Score" value={String(score)} />
-                                <Stat label="Time" value={`${timeLeft}s`} />
-                                <Stat
-                                    label="Weight"
-                                    value={`${weight.toFixed(1)}/${CAPACITY}kg`}
-                                />
-                                <div className="rounded-xl bg-white/5 px-2 py-2.5">
-                                    <div className="flex items-center justify-center gap-1 text-sm leading-none">
-                                        {Array.from({
-                                            length: MAX_STRIKES,
-                                        }).map((_, index) => (
-                                            <span
-                                                key={index}
-                                                className={
-                                                    index < strikes
-                                                        ? "text-rose-400"
-                                                        : "text-white/20"
-                                                }
-                                            >
-                                                ✖
-                                            </span>
-                                        ))}
-                                    </div>
-                                    <div className="mt-1 text-[10px] font-medium tracking-wider text-indigo-200/60 uppercase">
-                                        Strikes
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="mt-5">
-                                <div className="flex items-center justify-between text-xs font-semibold text-indigo-200/70">
-                                    <span>🧳 Suitcase capacity</span>
-                                    <span>{weightPercent}%</span>
-                                </div>
-                                <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-white/10">
-                                    <div
-                                        className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all duration-300"
-                                        style={{ width: `${weightPercent}%` }}
-                                    />
-                                </div>
-                            </div>
-
-                            <div
-                                key={item.id}
-                                className="mt-5 animate-[slide-in_0.35s_ease-out] rounded-2xl border border-white/10 bg-slate-900/60 p-6 text-center"
-                            >
-                                <div className="text-6xl leading-none drop-shadow-lg">
-                                    {item.emoji}
-                                </div>
-                                <div className="mt-3 text-lg font-semibold">
-                                    {item.name}
-                                </div>
-                                <div className="mt-1 text-sm text-indigo-200/70">
-                                    {item.weight.toFixed(1)} kg
-                                </div>
-                            </div>
-
-                            <div className="mt-4 min-h-10">
-                                {feedback ? (
-                                    <div
-                                        className={`rounded-xl px-4 py-2 text-center text-sm font-semibold ${FEEDBACK_CLASSES[feedback.kind]}`}
-                                    >
-                                        {feedback.text}
-                                    </div>
-                                ) : (
-                                    <div className="py-2 text-center text-sm text-indigo-200/50">
-                                        Pack it or reject it — choose fast!
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="mt-2 grid grid-cols-2 gap-3">
-                                <button
-                                    onClick={() => decide("pack")}
-                                    className="rounded-2xl bg-emerald-500 px-4 py-3.5 text-base font-bold shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-400 active:scale-95"
-                                >
-                                    ✓ Pack
-                                </button>
-                                <button
-                                    onClick={() => decide("reject")}
-                                    className="rounded-2xl bg-rose-500 px-4 py-3.5 text-base font-bold shadow-lg shadow-rose-500/30 transition hover:bg-rose-400 active:scale-95"
-                                >
-                                    ✗ Reject
-                                </button>
-                            </div>
-                        </div>
+                        <PlayingPhase
+                            item={item}
+                            score={score}
+                            weight={weight}
+                            strikes={strikes}
+                            timeLeft={timeLeft}
+                            weightPercent={weightPercent}
+                            feedback={feedback}
+                            decide={decide}
+                        />
                     )}
 
-                    {phase === "over" && (
-                        <div className="px-8 py-8 text-center">
-                            <div className="text-6xl">🛬</div>
-                            <h2 className="mt-4 text-2xl font-bold">
-                                {strikes >= MAX_STRIKES
-                                    ? "Held at the border!"
-                                    : "Time's up!"}
-                            </h2>
-                            <p className="mt-2 text-sm text-indigo-200/80">
-                                Your suitcase is ready — mostly.
-                            </p>
-
-                            <div className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-6">
-                                {newBest && (
-                                    <div className="mb-1 text-xs font-bold tracking-widest text-amber-300 uppercase">
-                                        New high score 🏆
-                                    </div>
-                                )}
-                                <div className="text-5xl font-extrabold">
-                                    {score}
-                                </div>
-                                <div className="mt-1 text-xs font-medium tracking-widest text-indigo-200/70 uppercase">
-                                    Final score
-                                </div>
-                                <div className="mt-5 grid grid-cols-3 gap-2 text-center text-sm">
-                                    <div>
-                                        <div className="text-xl font-bold">
-                                            {packed}
-                                        </div>
-                                        <div className="text-indigo-200/70">
-                                            Packed
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-xl font-bold">
-                                            {caught}
-                                        </div>
-                                        <div className="text-indigo-200/70">
-                                            Rejected
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-xl font-bold">
-                                            {Math.max(best, score)}
-                                        </div>
-                                        <div className="text-indigo-200/70">
-                                            Best
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button
-                                onClick={start}
-                                className="mt-6 rounded-2xl bg-indigo-500 px-8 py-3.5 text-base font-bold shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-400 active:scale-95"
-                            >
-                                Play again
-                            </button>
-                        </div>
+                    {phase === "finished" && (
+                        <FinishedPhase
+                            score={score}
+                            packed={packed}
+                            caught={caught}
+                            best={best}
+                            newBest={newBest}
+                            strikes={strikes}
+                            start={start}
+                        />
                     )}
                 </div>
             </div>
