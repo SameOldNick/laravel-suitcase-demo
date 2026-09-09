@@ -32,7 +32,9 @@ const FinishedPhase = ({
                         : "Time's up!"}
                 </h2>
                 <p className="mt-2 text-sm text-indigo-200/80">
-                    Your suitcase is ready — mostly.
+                    {strikes >= MAX_STRIKES
+                        ? "You made too many mistakes."
+                        : "You ran out of time."}
                 </p>
 
                 <div className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-6">

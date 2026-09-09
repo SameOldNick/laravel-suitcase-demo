@@ -172,7 +172,7 @@ const Home = () => {
             <Head title="Pack & Pass" />
             <style>{`@keyframes slide-in { from { transform: translateY(10px) scale(0.95); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }`}</style>
 
-            <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-4 font-sans text-white">
+            <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-4 font-sans text-white">
                 <div className="w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-md">
                     <div className="border-b border-white/10 px-8 pt-8 pb-6 text-center">
                         <h1 className="text-3xl font-extrabold tracking-tight">
@@ -210,6 +210,18 @@ const Home = () => {
                         />
                     )}
                 </div>
+
+                <p className="mt-4 text-center text-xs text-indigo-200/60">
+                    Deployed to shared hosting with{" "}
+                    <a
+                        href="https://github.com/SameOldNick/laravel-suitcase"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline decoration-indigo-200/40 underline-offset-2 transition hover:text-indigo-100"
+                    >
+                        Laravel Suitcase
+                    </a>
+                </p>
             </div>
         </>
     );
